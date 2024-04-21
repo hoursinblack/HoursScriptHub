@@ -1,0 +1,148 @@
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local accessKey = "Tis but a scratch"
+
+local function hasAccessedMenu(player)
+    return player:FindFirstChild("HasAccessedMenu") ~= nil
+end
+
+-- Function to grant access to the menu
+local function grantAccessToMenu(player)
+    local hasAccessed = hasAccessedMenu(player)
+    if not hasAccessed then
+        local marker = Instance.new("BoolValue")
+        marker.Name = "HasAccessedMenu"
+        marker.Parent = player
+
+        print(player.Name .. " has accessed the menu for the first time!")
+    end
+end
+
+-- Function to handle when the menu is opened
+local function openMenu(player)
+    if not hasAccessedMenu(player) then
+
+        local prompt = Instance.new("Hint")
+        prompt.Text = "Enter the access key to open the menu:"
+        prompt.Parent = player.PlayerGui
+
+        local userInput = Instance.new("TextBox")
+        userInput.Parent = player.PlayerGui
+        userInput.Position = UDim2.new(0.5, -100, 0.5, -50)
+        userInput.Size = UDim2.new(0, 200, 0, 30)
+        userInput.ClearTextOnFocus = true
+        userInput.FocusLost:Connect(function(enterPressed)
+            if enterPressed then
+                local enteredKey = userInput.Text
+                if enteredKey == accessKey then
+                    -- Grant access and remove the prompt and input
+                    grantAccessToMenu(player)
+                    prompt:Destroy()
+                    userInput:Destroy()
+                    -- Now open the menu directly
+                    -- Replace this with your actual menu opening logic
+                    local menuFrame = Instance.new("Frame")
+                    menuFrame.Size = UDim2.new(0.5, 0, 0.5, 0)
+                    menuFrame.Position = UDim2.new(0.25, 0, 0.25, 0)
+                    menuFrame.BackgroundColor3 = Color3.new(0, 0, 0)
+                    menuFrame.BackgroundTransparency = 0.5
+                    menuFrame.Parent = player.PlayerGui
+
+                    local extraHealthButton = Instance.new("TextButton")
+                    extraHealthButton.Text = "Extra Health"
+                    extraHealthButton.Size = UDim2.new(0.5, 0, 0.1, 0)
+                    extraHealthButton.Position = UDim2.new(0.25, 0, 0.4, 0)
+                    extraHealthButton.BackgroundColor3 = Color3.new(1, 1, 1)
+                    extraHealthButton.Parent = menuFrame
+                    extraHealthButton.MouseButton1Click:Connect(function()
+                        player.Character:FindFirstChildOfClass("Humanoid").Health = 99999
+                        print("Player's health set to 99999.")
+                    end)
+
+                    local plusSpeedButton = Instance.new("TextButton")
+                    plusSpeedButton.Text = "+10 walkspeed"
+                    plusSpeedButton.Size = UDim2.new(0.5, 0, 0.1, 0)
+                    plusSpeedButton.Position = UDim2.new(0.25, 0, 0.5, 0)
+                    plusSpeedButton.BackgroundColor3 = Color3.new(1, 1, 1)
+                    plusSpeedButton.Parent = menuFrame
+                    plusSpeedButton.MouseButton1Click:Connect(function()
+                        local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
+                        if humanoid then
+                            humanoid.WalkSpeed = humanoid.WalkSpeed + 10
+                            print("Player's walkspeed increased by 10.")
+                        end
+                    end)
+
+                    local terminateButton = Instance.new("TextButton")
+                    terminateButton.Text = "Terminate Others (HOLD!)"
+                    terminateButton.Size = UDim2.new(0.5, 0, 0.1, 0)
+                    terminateButton.Position = UDim2.new(0.25, 0, 0.6, 0)
+                    terminateButton.BackgroundColor3 = Color3.new(1, 1, 1)
+                    terminateButton.Parent = menuFrame
+                    terminateButton.MouseButton1Down:Connect(function()
+                        local startTime = tick()
+                        local holdTime = 5 -- hold time in seconds
+                        local connection
+                        connection = terminateButton.MouseButton1Up:Connect(function()
+                            local elapsedTime = tick() - startTime
+                            if elapsedTime >= holdTime then
+                                for _, otherPlayer in ipairs(Players:GetPlayers()) do
+                                    if otherPlayer ~= player then
+                                        otherPlayer:Destroy()
+                                    end
+                                end
+                                -- Terminate all entities in the game
+                                for _, entity in ipairs(workspace:GetDescendants()) do
+                                    if entity:IsA("Model") and entity.Parent and entity.Parent:IsA("Model") then
+                                        entity:Destroy()
+                                    end
+                                end
+                                print("Others terminated.")
+                            else
+                                print("Hold the button for " .. holdTime .. " seconds to activate.")
+                            end
+                            connection:Disconnect()
+                        end)
+                    end)
+
+                    print(player.Name .. " has opened the menu!")
+                else
+                    userInput.Text = ""
+                    userInput.PlaceholderText = "Invalid key. Try again."
+                end
+            else
+                -- Remove the prompt and input if focus lost without entering
+                prompt:Destroy()
+                userInput:Destroy()
+            end
+        end)
+        userInput:CaptureFocus()
+    else
+        -- Player already has access, directly open the menu
+        -- Replace this with your actual menu opening logic
+        print(player.Name .. " has opened the menu!")
+    end
+end
+
+-- Function to handle when a player joins the game
+local function onPlayerAdded(player)
+    -- Check if the player has already accessed the menu
+    if not hasAccessedMenu(player) then
+        -- If not, grant access automatically
+        grantAccessToMenu(player)
+    end
+end
+
+-- Connect the player added event
+Players.PlayerAdded:Connect(onPlayerAdded)
+
+-- Example usage: Open menu when a certain key is pressed
+game:GetService("UserInputService").InputBegan:Connect(function(input)
+    if input.KeyCode == Enum.KeyCode.M then
+        local player = Players.LocalPlayer
+        if player then
+            openMenu(player)
+        end
+    end
+end)
