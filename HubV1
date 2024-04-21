@@ -1,8 +1,29 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
+-- Key to access the menu for the first time
 local accessKey = "Tis but a scratch"
 
+-- Function to create a notification
+local function createNotification(player, message)
+    local billboardGui = Instance.new("BillboardGui")
+    billboardGui.Adornee = player.Character.Head
+    billboardGui.Size = UDim2.new(0, 200, 0, 50)
+    billboardGui.StudsOffset = Vector3.new(0, 2, 0)
+    billboardGui.AlwaysOnTop = true
+
+    local textLabel = Instance.new("TextLabel")
+    textLabel.Parent = billboardGui
+    textLabel.BackgroundTransparency = 1
+    textLabel.Size = UDim2.new(1, 0, 1, 0)
+    textLabel.TextColor3 = Color3.new(1, 1, 1)
+    textLabel.TextScaled = true
+    textLabel.Text = message
+
+    billboardGui.Parent = player.PlayerGui
+end
+
+-- Check if the player has already accessed the menu
 local function hasAccessedMenu(player)
     return player:FindFirstChild("HasAccessedMenu") ~= nil
 end
@@ -14,7 +35,7 @@ local function grantAccessToMenu(player)
         local marker = Instance.new("BoolValue")
         marker.Name = "HasAccessedMenu"
         marker.Parent = player
-
+        -- You can add any additional logic here when granting access, like giving rewards
         print(player.Name .. " has accessed the menu for the first time!")
     end
 end
@@ -22,7 +43,7 @@ end
 -- Function to handle when the menu is opened
 local function openMenu(player)
     if not hasAccessedMenu(player) then
-
+        -- If the player hasn't accessed the menu before, prompt for the access key
         local prompt = Instance.new("Hint")
         prompt.Text = "Enter the access key to open the menu:"
         prompt.Parent = player.PlayerGui
@@ -124,25 +145,3 @@ local function openMenu(player)
         print(player.Name .. " has opened the menu!")
     end
 end
-
--- Function to handle when a player joins the game
-local function onPlayerAdded(player)
-    -- Check if the player has already accessed the menu
-    if not hasAccessedMenu(player) then
-        -- If not, grant access automatically
-        grantAccessToMenu(player)
-    end
-end
-
--- Connect the player added event
-Players.PlayerAdded:Connect(onPlayerAdded)
-
--- Example usage: Open menu when a certain key is pressed
-game:GetService("UserInputService").InputBegan:Connect(function(input)
-    if input.KeyCode == Enum.KeyCode.M then
-        local player = Players.LocalPlayer
-        if player then
-            openMenu(player)
-        end
-    end
-end)
